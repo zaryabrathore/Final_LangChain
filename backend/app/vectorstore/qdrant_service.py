@@ -16,14 +16,25 @@ class QdrantVectorService:
         self.documents_metadata: List[Dict[str, Any]] = []
 
     def get_client(self) -> QdrantClient:
-        if settings.qdrant_host and settings.qdrant_api_key:
-            logger.info(f"Connecting to hosted Qdrant Cloud at {settings.qdrant_host}")
-            return QdrantClient(url=settings.qdrant_host, api_key=settings.qdrant_api_key)
-        else:
+        is_real_cloud = (
+            settings.qdrant_host
+            and settings.qdrant_api_key
+            and "your-" not in settings.qdrant_host.lower()
+            and "your_" not in settings.qdrant_api_key.lower()
+            and "cloud.qdrant.io" not in settings.qdrant_host.lower() or "your-qdrant" not in settings.qdrant_host.lower()
+        ) and ("your-" not in settings.qdrant_host.lower())
+
+        if is_real_cloud:
+            try:
+                logger.info(f"Connecting to hosted Qdrant Cloud at {settings.qdrant_host}")
+                return QdrantClient(url=settings.qdrant_host, api_key=settings.qdrant_api_key, timeout=5)
+            except Exception as e:
+                logger.warning(f"Could not connect to Qdrant Cloud ({e}), falling back to local in-memory instance.")
+
+        if not self._client:
             logger.info("Using local in-memory Qdrant instance")
-            if not self._client:
-                self._client = QdrantClient(location=":memory:")
-            return self._client
+            self._client = QdrantClient(location=":memory:")
+        return self._client
 
     def _ensure_collection(self, client: QdrantClient, vector_size: int = 768):
         collection_name = settings.qdrant_collection
@@ -99,8 +110,14 @@ class QdrantVectorService:
         embeddings = self.generate_embeddings(texts)
         vector_dim = len(embeddings[0]) if embeddings else 768
 
-        client = self.get_client()
-        self._ensure_collection(client, vector_size=vector_dim)
+        try:
+            client = self.get_client()
+            self._ensure_collection(client, vector_size=vector_dim)
+        except Exception as err:
+            logger.warning(f"Qdrant Cloud connection error ({err}), switching to local in-memory vector store.")
+            self._client = QdrantClient(location=":memory:")
+            client = self._client
+            self._ensure_collection(client, vector_size=vector_dim)
 
         points = []
         for idx, c in enumerate(chunks):
@@ -131,7 +148,12 @@ class QdrantVectorService:
 
     def search_similar(self, query: str, top_k: int = 4) -> List[Dict[str, Any]]:
         """Performs vector similarity search in Qdrant for a given text query."""
-        client = self.get_client()
+        try:
+            client = self.get_client()
+        except Exception:
+            if not self._client:
+                self._client = QdrantClient(location=":memory:")
+            client = self._client
         collection_name = settings.qdrant_collection
         
         try:

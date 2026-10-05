@@ -5,33 +5,61 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class DynamicSettings:
-    def __init__ (self):
-        self.gemini_api_key: str = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or ""
-        self.qdrant_host: str = os.getenv("QDRANT_HOST") or ""
-        self.qdrant_api_key: str = os.getenv("QDRANT_API_KEY") or ""
-        self.qdrant_collection: str = os.getenv("QDRANT_COLLECTION_NAME") or "pdf_rag_collection"
-        self.github_token: str = os.getenv("GITHUB_TOKEN") or ""
-        self.google_client_id: str = os.getenv("GOOGLE_CLIENT_ID") or ""
-        self.google_client_secret: str = os.getenv("GOOGLE_CLIENT_SECRET") or ""
-        self.google_refresh_token: str = os.getenv("GOOGLE_REFRESH_TOKEN") or ""
-        self.google_user_email: str = os.getenv("GOOGLE_USER_EMAIL") or "user@example.com"
+    def __init__(self):
+        self._custom_settings: Dict[str, Any] = {}
+
+    def _reload_env(self):
+        load_dotenv(override=True)
+
+    @property
+    def gemini_api_key(self) -> str:
+        return self._custom_settings.get("gemini_api_key") or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or ""
+
+    @property
+    def qdrant_host(self) -> str:
+        return self._custom_settings.get("qdrant_host") or os.getenv("QDRANT_HOST") or ""
+
+    @property
+    def qdrant_api_key(self) -> str:
+        return self._custom_settings.get("qdrant_api_key") or os.getenv("QDRANT_API_KEY") or ""
+
+    @property
+    def qdrant_collection(self) -> str:
+        return self._custom_settings.get("qdrant_collection") or os.getenv("QDRANT_COLLECTION_NAME") or "pdf_rag_collection"
+
+    @property
+    def github_token(self) -> str:
+        return self._custom_settings.get("github_token") or os.getenv("GITHUB_TOKEN") or ""
+
+    @property
+    def google_client_id(self) -> str:
+        load_dotenv(override=True)
+        return self._custom_settings.get("google_client_id") or os.getenv("GOOGLE_CLIENT_ID") or ""
+
+    @property
+    def google_client_secret(self) -> str:
+        load_dotenv(override=True)
+        return self._custom_settings.get("google_client_secret") or os.getenv("GOOGLE_CLIENT_SECRET") or ""
+
+    @property
+    def google_refresh_token(self) -> str:
+        load_dotenv(override=True)
+        return self._custom_settings.get("google_refresh_token") or os.getenv("GOOGLE_REFRESH_TOKEN") or ""
+
+    @property
+    def google_user_email(self) -> str:
+        return self._custom_settings.get("google_user_email") or os.getenv("GOOGLE_USER_EMAIL") or "user@example.com"
+
+    @property
+    def gmail_app_password(self) -> str:
+        load_dotenv(override=True)
+        return self._custom_settings.get("gmail_app_password") or os.getenv("GMAIL_APP_PASSWORD") or os.getenv("SMTP_PASSWORD") or ""
 
     def update(self, new_settings: Dict[str, Any]):
-        if "gemini_api_key" in new_settings:
-            self.gemini_api_key = new_settings["gemini_api_key"]
-            os.environ["GEMINI_API_KEY"] = self.gemini_api_key
-            os.environ["GOOGLE_API_KEY"] = self.gemini_api_key
-        if "qdrant_host" in new_settings:
-            self.qdrant_host = new_settings["qdrant_host"]
-        if "qdrant_api_key" in new_settings:
-            self.qdrant_api_key = new_settings["qdrant_api_key"]
-        if "qdrant_collection" in new_settings:
-            self.qdrant_collection = new_settings["qdrant_collection"]
-        if "github_token" in new_settings:
-            self.github_token = new_settings["github_token"]
-            os.environ["GITHUB_TOKEN"] = self.github_token
-        if "google_user_email" in new_settings:
-            self.google_user_email = new_settings["google_user_email"]
+        for key, val in new_settings.items():
+            if val is not None:
+                self._custom_settings[key] = val
+                os.environ[key.upper()] = str(val)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -41,7 +69,8 @@ class DynamicSettings:
             "qdrant_collection": self.qdrant_collection,
             "github_token_set": bool(self.github_token),
             "google_user_email": self.google_user_email,
-            "google_client_id_set": bool(self.google_client_id)
+            "google_client_id_set": bool(self.google_client_id),
+            "gmail_app_password_set": bool(self.gmail_app_password)
         }
 
 settings = DynamicSettings()

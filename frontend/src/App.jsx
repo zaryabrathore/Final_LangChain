@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
+import TabBar from './components/TabBar';
 import AgentChat from './components/AgentChat';
 import RagPanel from './components/RagPanel';
 import GithubPanel from './components/GithubPanel';
@@ -23,13 +24,13 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#0a0d14] text-slate-100 flex flex-col font-sans">
       <Navbar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
         onOpenSettings={() => setIsSettingsOpen(true)}
         systemHealth={systemHealth}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6">
+        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
+
         {activeTab === 'chat' && <AgentChat apiHost={API_HOST} />}
         {activeTab === 'rag' && <RagPanel apiHost={API_HOST} />}
         {activeTab === 'github' && <GithubPanel apiHost={API_HOST} />}

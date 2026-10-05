@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Sparkles, Terminal, Database, Calendar, ArrowRight, Activity } from 'lucide-react';
 import { GithubIcon as Github } from './Icons';
-import GraphVisualizer from './GraphVisualizer';
 
 export default function AgentChat({ apiHost }) {
   const [messages, setMessages] = useState([
@@ -145,8 +144,6 @@ export default function AgentChat({ apiHost }) {
 
   return (
     <div className="space-y-4">
-      {/* Visual Graph Header */}
-      <GraphVisualizer activeNode={activeNode} executionLogs={currentExecutionLogs} />
 
       {/* Main Chat Container */}
       <div className="glass-panel flex flex-col h-[580px] overflow-hidden">

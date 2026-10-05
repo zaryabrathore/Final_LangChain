@@ -89,22 +89,30 @@ class GitHubMCPClient:
         g = self._get_github_instance()
 
         if tool_name == "github_search_repositories":
-            query = args.get("query", "")
-            if g:
-                try:
-                    repos = g.search_repositories(query=query)
+            query = args.get("query", "langchain")
+            token = settings.github_token
+            headers = {"Authorization": f"token {token}"} if token else {}
+            try:
+                import requests
+                resp = requests.get(
+                    f"https://api.github.com/search/repositories?q={query}&per_page=5",
+                    headers=headers,
+                    timeout=6
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
                     items = []
-                    for r in list(repos)[:5]:
+                    for r in data.get("items", [])[:5]:
                         items.append({
-                            "full_name": r.full_name,
-                            "description": r.description,
-                            "stars": r.stargazers_count,
-                            "url": r.html_url,
-                            "language": r.language
+                            "full_name": r.get("full_name"),
+                            "description": r.get("description") or "",
+                            "stars": r.get("stargazers_count", 0),
+                            "url": r.get("html_url"),
+                            "language": r.get("language") or "Code"
                         })
                     return {"status": "success", "repositories": items, "count": len(items)}
-                except Exception as e:
-                    logger.warning(f"GitHub API error: {e}")
+            except Exception as e:
+                logger.warning(f"GitHub search REST error: {e}")
             
             # Sandbox / Simulated MCP fallback response
             return {

@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { Search, GitCommit, AlertCircle, FileCode, Terminal, ExternalLink } from 'lucide-react';
 import { GithubIcon as Github } from './Icons';
 

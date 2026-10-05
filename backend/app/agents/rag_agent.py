@@ -29,7 +29,7 @@ def run_rag_sub_agent(state: Dict[str, Any]) -> Dict[str, Any]:
                 from langchain_core.messages import SystemMessage, HumanMessage
 
                 llm = ChatGoogleGenerativeAI(
-                    model="gemini-1.5-flash",
+                    model="gemini-1.5-flash-latest",
                     google_api_key=settings.gemini_api_key,
                     temperature=0.2
                 )

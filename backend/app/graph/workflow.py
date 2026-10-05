@@ -45,7 +45,7 @@ def run_supervisor_sub_agent(state: AgentState) -> Dict[str, Any]:
             from langchain_core.messages import SystemMessage, HumanMessage
 
             llm = ChatGoogleGenerativeAI(
-                model="gemini-1.5-flash",
+                model="gemini-1.5-flash-latest",
                 google_api_key=settings.gemini_api_key,
                 temperature=0.3
             )
@@ -87,13 +87,13 @@ def supervisor_router(state: AgentState) -> Dict[str, Any]:
 
     if forced_target in ["rag", "github", "google_workspace", "supervisor"]:
         target = forced_target
+    elif any(k in query for k in ["meeting", "calendar", "event", "schedule", "email", "gmail", "draft", "invite", "notify", "appointment"]):
+        target = "google_workspace"
     elif any(k in query for k in ["pdf", "document", "file", "qdrant", "paper", "content", "what does the doc say", "rag"]):
         target = "rag"
-    elif any(k in query for k in ["github", "repo", "commit", "issue", "branch", "codebase", "stars"]):
+    elif any(k in query for k in ["github", "repo", "commit", "issue", "branch", "codebase", "stars"]) or ("/" in query and not "http" in query):
         target = "github"
-    elif any(k in query for k in ["meeting", "calendar", "event", "schedule", "email", "gmail", "draft", "invite", "notify"]):
-        target = "google_workspace"
-    elif any(k in query for k in ["ui", "frontend", "react", "add", "custom", "interface", "design", "help", "hello", "hi", "supervisor", "can i"]):
+    elif any(k in query for k in ["ui", "frontend", "react", "component", "interface", "design", "help", "hello", "hi", "supervisor"]):
         target = "supervisor"
     else:
         # Default router heuristic
